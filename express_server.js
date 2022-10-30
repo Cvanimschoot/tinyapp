@@ -23,7 +23,7 @@ const urlDatabase = {
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
-  res.render("urls_index",  );
+  res.render("urls_index", templateVars);
 })
 
 app.get("/urls/new", (req, res) => {
@@ -35,9 +35,17 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
+});
+
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send(generateRandomString()); // Respond with 'Ok' (we will replace this)
+  const url = req.body.longURL;
+  const newID = generateRandomString();
+  urlDatabase[newID] = url;
+  templateVars = { id: newID, longURL: url };
+  res.redirect(`/urls/${newID}`);
 });
 
 
