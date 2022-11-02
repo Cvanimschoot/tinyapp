@@ -44,6 +44,12 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+app.get("/urls/register", (req, res) => {
+  const username = checkUsername(req);
+  const templateVars = { username: username }
+  res.render("urls_register", templateVars);
+})
+
 app.get("/urls/:id", (req, res) => {
   const username = checkUsername(req);
   const templateVars = { username: username, id: req.params.id, longURL: urlDatabase[req.params.id]};
