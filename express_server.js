@@ -18,13 +18,22 @@ function generateRandomString() {
   return returnString;
 };
 
-function checkUsername(req) {
-  let username = req.cookies["username"];
-  if (!username) {
-    return "Username"
+function checkRegistered(req) {
+  let username = req.cookies["user_id"];
+  if (!username || !users[username]) {
+    return false
   }
-  return username;
+  return true;
 };
+
+function emailChecker(email) {
+  for (keys in users) {
+    if(users[keys].email === email) {
+      return users[keys];
+    }
+  }
+  return null;
+}
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -45,27 +54,37 @@ const users = {
 };
 
 app.get("/urls", (req, res) => {
-  const username = checkUsername(req);
-  const templateVars = { urls: urlDatabase, username: username };
-  console.log(req.cookies["username"]);
+  const registered = checkRegistered(req);
+  const userID = req.cookies["user_id"];
+  const templateVars = { urls: urlDatabase, users: users, registered: registered, userID: userID };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const username = checkUsername(req);
-  const templateVars = { username: username };
+  const registered = checkRegistered(req);
+  const userID = req.cookies["user_id"];
+  const templateVars = { users: users, registered: registered, userID: userID };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/register", (req, res) => {
-  const username = checkUsername(req);
-  const templateVars = { username: username }
+  const registered = checkRegistered(req);
+  const userID = req.cookies["user_id"];
+  const templateVars = { users: users, registered: registered, userID: userID }
   res.render("urls_register", templateVars);
 });
 
+app.get("/urls/login", (req, res) => {
+  const registered = checkRegistered(req);
+  const userID = req.cookies["user_id"];
+  const templateVars = { users: users, registered: registered, userID: userID }
+  res.render("urls_login", templateVars)
+});
+
 app.get("/urls/:id", (req, res) => {
-  const username = checkUsername(req);
-  const templateVars = { username: username, id: req.params.id, longURL: urlDatabase[req.params.id]};
+  const registered = checkRegistered(req);
+  const userID = req.cookies["user_id"];
+  const templateVars = { users: users, registered: registered, userID: userID, id: req.params.id, longURL: urlDatabase[req.params.id]};
   res.render("urls_show", templateVars);
 });
 
@@ -78,8 +97,9 @@ app.post("/urls", (req, res) => {
   const url = req.body.longURL;
   const newID = generateRandomString();
   urlDatabase[newID] = url;
-  const username = checkUsername(req);
-  templateVars = { username: username, id: newID, longURL: url };
+  const registered = checkRegistered(req);
+  const userID = req.cookies["user_id"];
+  templateVars = { users: users, registered: registered, userID: userID, id: newID, longURL: url };
   res.redirect(`/urls/${newID}`);
 });
 
@@ -97,22 +117,37 @@ app.post("/urls/:id/edit", (req, res) =>{
   res.redirect(`/urls/${req.params.id}`);
 });
 
-app.post("/login", (req, res) => {
-  res.cookie('username', req.body.username);
-  res.redirect(`/urls/`);
-});
-
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
-  res.redirect(`/urls/`);
+  res.clearCookie('user_id');
+  res.redirect(`/urls/login`);
 });
 
 app.post("/urls/register", (req, res) => {
   const id = generateRandomString();
+  if (req.body.email === "" || req.body.password === "" || emailChecker(req.body.email) !== null) {
+    res.sendStatus(res.statusCode = 400);
+  }
   users[id] = { id: id, email: req.body.email, password: req.body.password };
   res.cookie('user_id', id);
   res.redirect('/urls/');
 });
+
+app.post("/urls/login", (req, res) => {
+  if (req.body.email === "" || req.body.password === "") {
+    res.sendStatus(res.statusCode = 400);
+  }
+  const userObject = emailChecker(req.body.email);
+  if (userObject) {
+    if (req.body.password === userObject.password) {
+      res.cookie('user_id', userObject.id);
+      res.redirect('/urls');
+    } else {
+      res.sendStatus(res.statusCode = 403);
+    }
+  } else {
+    res.sendStatus(res.statusCode = 403);
+  }
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

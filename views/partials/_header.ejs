@@ -16,38 +16,15 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <a class="nav-item nav-link" href="/urls/register">Register</a>
-        <form method="POST"
-          <% /* This will loop to check for a username. 
-              * If there is none then when it is posted, it will save the username as a cookie. 
-              * If there is one, then when it posts it will post to /logout instead.
-              */ %>
-          <% if(username === "Username"){ %>
-            action= "/login"
-          <% } else{ %>  
-            action= "/logout"
-          <% } %>>
-          <% /* This will loop to check for if a username is stored. 
-              * If there is none then it will display a text box to enter one. 
-              * If there is one, then when it will show the username.
-              */ %>
-          <% if(username === "Username"){ %>
-            <input type="text" placeholder= <%= username %> name="username" id="username">
-          <% } else{ %>  
-            <p>Logged in as: <%= username %></p>
-          <% } %>
-          <% /* This will loop to check for if a username is stored. 
-              * If there is none then it will show a login button. 
-              * If there is one, then when it will show a logout button.
-              */ %>
-          <button type="submit">
-            <% if(username === "Username"){ %>
-              LOGIN
-            <% } else{ %>  
-              LOGOUT
-            <% } %>
-          </button>
-        </form>
+        <% if(registered === false){ %>
+          <a class="nav-item nav-link" href="/urls/register">Register</a>
+          <a class="nav-item nav-link" href="/urls/login">Login</a>
+        <% } else{ %>  
+          <a class="nav-item">Logged in as: <%= users[userID].email %></a>
+          <form method="POST" action="/logout">
+            <a class="nav-item"><button type="submit">LOGOUT</button></a>
+          </form>
+        <% } %>
       </div>
     </div>
   </nav>
