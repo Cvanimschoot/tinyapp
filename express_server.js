@@ -35,16 +35,38 @@ function emailChecker(email) {
   return null;
 }
 
+function urlsForUser(id) {
+  let urls = {};
+  
+  for(keys in urlDatabase) {
+    if(urlDatabase[keys].userID === id) {
+      urls[keys] = {longURL: urlDatabase[keys].longURL};
+    }
+  }
+
+  return urls;
+}
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
+  i23LyXR: {
+    longURL: "https://neopets.com",
+    userID: "bK67L3",
+  }
 };
 
 const users = {
-  userRandomID: {
-    id: "userRandomID",
+  aJ48lW: {
+    id: "aJ48lW",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "a",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -56,12 +78,16 @@ const users = {
 app.get("/urls", (req, res) => {
   const registered = checkRegistered(req);
   const userID = req.cookies["user_id"];
-  const templateVars = { urls: urlDatabase, users: users, registered: registered, userID: userID };
+  const urlObject = urlsForUser(userID);
+  const templateVars = { urls: urlObject, users: users, registered: registered, userID: userID };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   const registered = checkRegistered(req);
+  if(registered === false) {
+    res.redirect('/urls/login');
+  }
   const userID = req.cookies["user_id"];
   const templateVars = { users: users, registered: registered, userID: userID };
   res.render("urls_new", templateVars);
@@ -69,6 +95,9 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/register", (req, res) => {
   const registered = checkRegistered(req);
+  if(registered === true) {
+    res.redirect('/urls');
+  }
   const userID = req.cookies["user_id"];
   const templateVars = { users: users, registered: registered, userID: userID }
   res.render("urls_register", templateVars);
@@ -76,6 +105,9 @@ app.get("/urls/register", (req, res) => {
 
 app.get("/urls/login", (req, res) => {
   const registered = checkRegistered(req);
+  if(registered === true) {
+    res.redirect('/urls');
+  }
   const userID = req.cookies["user_id"];
   const templateVars = { users: users, registered: registered, userID: userID }
   res.render("urls_login", templateVars)
@@ -83,29 +115,49 @@ app.get("/urls/login", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   const registered = checkRegistered(req);
-  const userID = req.cookies["user_id"];
-  const templateVars = { users: users, registered: registered, userID: userID, id: req.params.id, longURL: urlDatabase[req.params.id]};
-  res.render("urls_show", templateVars);
+  if (registered) {
+    const userID = req.cookies["user_id"];
+    if (userID === urlDatabase[req.params.id].userID) {
+      for (keys in urlDatabase) {
+        if(req.params.id === keys) {
+          const templateVars = { users: users, registered: registered, userID: userID, id: req.params.id, longURL: urlDatabase[req.params.id].longURL};
+          res.render("urls_show", templateVars);
+        }
+      }
+      res.sendStatus(res.statusCode = 404);
+    }
+    res.sendStatus(res.statusCode = 404);
+  }
+  res.sendStatus(res.statusCode = 400);
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {
   const url = req.body.longURL;
   const newID = generateRandomString();
-  urlDatabase[newID] = url;
   const registered = checkRegistered(req);
-  const userID = req.cookies["user_id"];
-  templateVars = { users: users, registered: registered, userID: userID, id: newID, longURL: url };
+  if (registered === false) {
+    res.sendStatus(res.statusCode = 404);
+  } else {
+    const userID = req.cookies["user_id"];
+    urlDatabase[newID] = {longURL: url, userID: userID};
+    templateVars = { users: users, registered: registered, userID: userID, id: newID, longURL: url };
+  }
   res.redirect(`/urls/${newID}`);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect("/urls/");
+  const userID = req.cookies["user_id"];
+  if (userID === urlDatabase[req.params.id].userID) {
+    delete urlDatabase[req.params.id];
+    res.redirect("/urls/");
+  } else {
+    res.sendStatus(res.statusCode = 404);
+  }
 });
 
 app.post("/urls/:id/update", (req, res) => {
@@ -114,7 +166,12 @@ app.post("/urls/:id/update", (req, res) => {
 });
 
 app.post("/urls/:id/edit", (req, res) =>{
-  res.redirect(`/urls/${req.params.id}`);
+  const userID = req.cookies["user_id"];
+  if (userID === urlDatabase[req.params.id].userID) {
+    res.redirect(`/urls/${req.params.id}`);
+  } else {
+    res.sendStatus(res.statusCode = 404);
+  }
 });
 
 app.post("/logout", (req, res) => {
