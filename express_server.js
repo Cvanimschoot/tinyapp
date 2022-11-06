@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
+const helpers = require("./helpers");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -87,10 +88,11 @@ app.get("/urls/new", (req, res) => {
   const registered = checkRegistered(req);
   if(registered === false) {
     res.redirect('/urls/login');
+  } else {
+    const userID = req.session.user_id;
+    const templateVars = { users: users, registered: registered, userID: userID };
+    res.render("urls_new", templateVars);
   }
-  const userID = req.session.user_id;
-  const templateVars = { users: users, registered: registered, userID: userID };
-  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/register", (req, res) => {
@@ -125,10 +127,12 @@ app.get("/urls/:id", (req, res) => {
         }
       }
       res.sendStatus(res.statusCode = 404);
+    } else {
+      res.sendStatus(res.statusCode = 404);
     }
-    res.sendStatus(res.statusCode = 404);
+  } else {
+    res.sendStatus(res.statusCode = 400);
   }
-  res.sendStatus(res.statusCode = 400);
 });
 
 app.get("/u/:id", (req, res) => {
@@ -161,7 +165,7 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id/update", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
+  urlDatabase[req.params.id] = { longURL: req.body.longURL, userID: req.session.user_id };
   res.redirect(`/urls/`);
 });
 
@@ -181,7 +185,7 @@ app.post("/logout", (req, res) => {
 
 app.post("/urls/register", (req, res) => {
   const id = generateRandomString();
-  if (req.body.email === "" || req.body.password === "" || emailChecker(req.body.email, users) !== null) {
+  if (req.body.email === "" || req.body.password === "" || helpers.emailChecker(req.body.email, users) !== undefined) {
     res.sendStatus(res.statusCode = 400);
   }
   const password = req.body.password;
@@ -195,17 +199,17 @@ app.post("/urls/login", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     res.sendStatus(res.statusCode = 400);
   }
-  const userObject = emailChecker(req.body.email, users);
+  const userObject = helpers.emailChecker(req.body.email, users);
   if (userObject) {
 
     if (bcrypt.compareSync(req.body.password, userObject.password)) {
       req.session.user_id = userObject.id;
       res.redirect('/urls');
     } else {
-      res.sendStatus(res.statusCode = 403);
+      res.sendStatus(res.statusCode = 404);
     }
   } else {
-    res.sendStatus(res.statusCode = 403);
+    res.sendStatus(res.statusCode = 404);
   }
 })
 

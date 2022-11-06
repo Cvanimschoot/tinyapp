@@ -4,5 +4,7 @@ function emailChecker(email, database) {
       return database[keys];
     }
   }
-  return null;
+  return undefined;
 }
+
+module.exports = { emailChecker };
