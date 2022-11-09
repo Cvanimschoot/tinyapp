@@ -12,8 +12,6 @@ This is the URLs page. Here, once a user is logged in, they will be able to see 
 
 !["Screenshot of URLs page"](https://github.com/Cvanimschoot/tinyapp/blob/master/docs/urls_page.png?raw=true)
 
-
-
 ## Dependencies
 
 - Node.js
