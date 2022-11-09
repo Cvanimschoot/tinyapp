@@ -31,7 +31,7 @@
         </thead>
         <tbody>
           <% if (registered) { %>
-            <% for (let id in urls) { %>
+            <% for (let id in urls) { %> <!-- Display URLs if user is logged in -->
               <tr>
                 <td><%= id %></td>
                 <td><%= urls[id].longURL %></td>
@@ -47,7 +47,7 @@
                 </form>
               </tr>
             <% } %>
-          <% } else { %>
+          <% } else { %> <!-- Display message for user to login if not -->
             <p>Please log in to an account to see your URLs</p>
           <%}
           %>
